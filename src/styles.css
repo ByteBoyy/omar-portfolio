@@ -102,18 +102,20 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .project-footer span, .modal-stack span { padding: 6px 9px; border-radius: 7px; background: var(--soft); color: var(--muted); font-size: 11px; }
 .project-footer i { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 5px; color: var(--accent); font-size: 13px; font-style: normal; font-weight: 600; }
 
-.capabilities { display: grid; grid-template-columns: minmax(260px, .62fr) minmax(0, 1.38fr); gap: clamp(60px, 8vw, 130px); color: var(--ink); background: var(--white); }
+.capabilities { display: block; padding-bottom: clamp(64px, 5vw, 80px); color: var(--ink); background: var(--white); }
+.capabilities-lead { display: grid; grid-template-areas: "label copy" "title copy"; grid-template-columns: minmax(340px, .72fr) minmax(0, 1.28fr); align-items: end; column-gap: clamp(60px, 9vw, 150px); }
+.capabilities-lead .section-index { grid-area: label; }
 .capabilities .section-index { letter-spacing: 0; text-transform: none; }
-.capabilities h2 { max-width: 8ch; font-size: clamp(46px, 5vw, 70px); }
-.capabilities-lead > p { max-width: 45ch; margin-top: 28px; color: var(--muted); font-size: 17px; line-height: 1.6; }
-.capability-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 0 42px; }
+.capabilities h2 { grid-area: title; max-width: 10ch; font-size: clamp(46px, 5vw, 70px); }
+.capabilities-lead > p { grid-area: copy; max-width: 61ch; margin: 0; color: var(--muted); font-size: 18px; line-height: 1.6; }
+.capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 0 34px; margin-top: clamp(58px, 6vw, 86px); }
 .capability-list > div { padding: 28px 0 30px; border-top: 1px solid var(--line); }
 .capability-list h3 { margin: 0 0 10px; font-size: 21px; }
 .capability-list p { max-width: 48ch; margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.5; }
 .capability-list ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .capability-list li { padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; color: #505457; background: var(--paper); font-size: 12px; }
 
-.experience { display: grid; grid-template-columns: .8fr 1.2fr; gap: 8vw; background: var(--white); }
+.experience { display: grid; grid-template-columns: .8fr 1.2fr; gap: 8vw; padding-top: clamp(76px, 7vw, 96px); border-top: 1px solid var(--line); background: var(--paper); }
 .experience h2 { max-width: 9ch; }
 .role-list article { display: grid; grid-template-columns: 120px 190px 1fr; gap: 24px; padding: 28px 0; border-top: 1px solid var(--line); }
 .role-list time { color: var(--accent); font-size: 12px; font-weight: 600; text-transform: uppercase; }
@@ -184,6 +186,10 @@ footer a { margin-left: auto; }
   .project-card button { display: grid; grid-template-columns: 1fr 1fr; }
   .project-image { height: 100%; aspect-ratio: auto; border-right: 1px solid var(--line); border-bottom: 0; }
   .positioning, .capabilities, .experience, .additional { grid-template-columns: 1fr; }
+  .capabilities-lead { grid-template-areas: "label" "title" "copy"; grid-template-columns: 1fr; align-items: start; }
+  .capabilities-lead > p { margin-top: 28px; }
+  .capabilities-lead > p { max-width: 58ch; }
+  .capability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .role-list article { grid-template-columns: 110px 170px 1fr; }
 }
 

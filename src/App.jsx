@@ -243,6 +243,7 @@ function ProjectModal({ project, onClose }) {
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const handleKey = (event) => event.key === "Escape" && onClose();
@@ -250,6 +251,7 @@ function ProjectModal({ project, onClose }) {
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKey);
+      if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus();
     };
   }, [onClose]);
 

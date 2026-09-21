@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowDown,
@@ -202,19 +202,26 @@ const roles = [
 
 function AudioDemo() {
   const [available, setAvailable] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef(null);
 
   useEffect(() => {
     fetch("/audio/bitewise-demo.mp3", { method: "HEAD" })
-      .then((response) => setAvailable(response.ok))
-      .catch(() => setAvailable(false));
+      .then((response) => {
+        setAvailable(response.ok);
+        setFailed(!response.ok);
+      })
+      .catch(() => {
+        setAvailable(false);
+        setFailed(true);
+      });
   }, []);
 
   const toggle = () => {
     const audio = audioRef.current;
     if (!audio || !available) return;
-    if (audio.paused) audio.play();
+    if (audio.paused) audio.play().catch(() => setFailed(true));
     else audio.pause();
   };
 
@@ -231,8 +238,8 @@ function AudioDemo() {
         </button>
         <div className="waveform" aria-hidden="true">{Array.from({ length: 28 }, (_, index) => <i key={index} style={{ height: `${20 + ((index * 17) % 55)}%` }} />)}</div>
         <Volume2 size={19} aria-hidden="true" />
-        <span>{available ? "Demo call" : "Recording pending"}</span>
-        <audio ref={audioRef} src="/audio/bitewise-demo.mp3" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
+        <span role="status" aria-live="polite">{available ? "Demo call" : failed ? "Demo unavailable" : "Recording pending"}</span>
+        <audio ref={audioRef} src="/audio/bitewise-demo.mp3" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onError={() => setFailed(true)} />
       </div>
     </section>
   );
@@ -240,22 +247,50 @@ function AudioDemo() {
 
 function ProjectModal({ project, onClose }) {
   const closeRef = useRef(null);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
+    const previouslyFocused = document.activeElement;
+    const appRoot = document.getElementById("root");
+    const wasAppRootInert = appRoot?.inert ?? false;
     document.body.style.overflow = "hidden";
+    if (appRoot) appRoot.inert = true;
     closeRef.current?.focus();
-    const handleKey = (event) => event.key === "Escape" && onClose();
+    const handleKey = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !modalRef.current) return;
+      const focusable = [...modalRef.current.querySelectorAll("button, a, [tabindex]:not([tabindex=\"-1\"])")]
+        .filter((element) => !element.hasAttribute("disabled") && element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!modalRef.current.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", handleKey);
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (appRoot) appRoot.inert = wasAppRootInert;
       window.removeEventListener("keydown", handleKey);
+      if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus();
     };
   }, [onClose]);
 
   return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <article className="modal" role="dialog" aria-modal="true" aria-labelledby={`${project.id}-title`}>
+      <article ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby={`${project.id}-title`}>
         <button ref={closeRef} className="modal-close" type="button" onClick={onClose} aria-label="Close case study"><X size={22} /></button>
         <div className="modal-hero">
           <span>{project.type}</span>
@@ -295,6 +330,7 @@ function ProjectModal({ project, onClose }) {
 
 function App() {
   const [selectedProject, setSelectedProject] = useState(null);
+  const closeProject = useCallback(() => setSelectedProject(null), []);
 
   return (
     <div className="site-shell">
@@ -418,7 +454,7 @@ function App() {
       </main>
 
       <footer><span>Omar Ashraf</span><p>Senior AI Engineer based in Pakistan, working remotely with teams worldwide.</p><a href="#top">Back to top</a></footer>
-      {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
+      {selectedProject && <ProjectModal project={selectedProject} onClose={closeProject} />}
     </div>
   );
 }

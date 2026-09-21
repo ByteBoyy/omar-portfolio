@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowDown,
@@ -247,24 +247,31 @@ function AudioDemo() {
 
 function ProjectModal({ project, onClose }) {
   const closeRef = useRef(null);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     const previouslyFocused = document.activeElement;
+    const appRoot = document.getElementById("root");
+    const wasAppRootInert = appRoot?.inert ?? false;
     document.body.style.overflow = "hidden";
+    if (appRoot) appRoot.inert = true;
     closeRef.current?.focus();
     const handleKey = (event) => {
       if (event.key === "Escape") {
         onClose();
         return;
       }
-      if (event.key !== "Tab" || !closeRef.current) return;
-      const focusable = [...document.querySelectorAll(".modal button, .modal a, .modal [tabindex]:not([tabindex=\"-1\"])")]
+      if (event.key !== "Tab" || !modalRef.current) return;
+      const focusable = [...modalRef.current.querySelectorAll("button, a, [tabindex]:not([tabindex=\"-1\"])")]
         .filter((element) => !element.hasAttribute("disabled") && element.getClientRects().length > 0);
       if (!focusable.length) return;
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (!modalRef.current.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -275,6 +282,7 @@ function ProjectModal({ project, onClose }) {
     window.addEventListener("keydown", handleKey);
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (appRoot) appRoot.inert = wasAppRootInert;
       window.removeEventListener("keydown", handleKey);
       if (previouslyFocused instanceof HTMLElement && previouslyFocused.isConnected) previouslyFocused.focus();
     };
@@ -282,7 +290,7 @@ function ProjectModal({ project, onClose }) {
 
   return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <article className="modal" role="dialog" aria-modal="true" aria-labelledby={`${project.id}-title`}>
+      <article ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-labelledby={`${project.id}-title`}>
         <button ref={closeRef} className="modal-close" type="button" onClick={onClose} aria-label="Close case study"><X size={22} /></button>
         <div className="modal-hero">
           <span>{project.type}</span>
@@ -322,6 +330,7 @@ function ProjectModal({ project, onClose }) {
 
 function App() {
   const [selectedProject, setSelectedProject] = useState(null);
+  const closeProject = useCallback(() => setSelectedProject(null), []);
 
   return (
     <div className="site-shell">
@@ -445,7 +454,7 @@ function App() {
       </main>
 
       <footer><span>Omar Ashraf</span><p>Senior AI Engineer based in Pakistan, working remotely with teams worldwide.</p><a href="#top">Back to top</a></footer>
-      {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
+      {selectedProject && <ProjectModal project={selectedProject} onClose={closeProject} />}
     </div>
   );
 }

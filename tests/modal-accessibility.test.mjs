@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { after, before, test } from "node:test";
-import { chromium } from "playwright-core";
+import { chromium } from "playwright";
 import { createServer } from "vite";
 
 let browser;
